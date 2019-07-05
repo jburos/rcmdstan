@@ -16,14 +16,15 @@
 #'   that since this command runs without privillege the "system" method is
 #'   available only on Windows.
 #'
-#' @param version CmdStanPy version to install. Specify "default" to install
-#'   the latest version tested in this package. Specify "latest" to install
-#'   the latest version (experimental) irrespective of testing.
+#' @param version CmdStanPy version to install. Because CmdStanPy
+#'   is not yet available on PyPI, this installs from github
+#'   using git+git://github.com/stan-dev/cmdstanpy.
 #'
-#'   You can also provide a full major.minor.patch specification (e.g. "1.1.0")
+#'   Specify "default" to install from the "master" branch. Otherwise, provide a tag to the
+#'   git commit/branch you wish to install.
 #'
 #'   Alternatively, you can provide the full URL to an installer binary (e.g.
-#'   for a nightly binary).
+#'   for a nightly binary) or to an alternate git repo (e.g. your local fork).
 #'
 #' @param envname Name of Python environment to install within
 #'
@@ -61,7 +62,7 @@ install_cmdstanpy <- function(method = c("auto", "virtualenv", "conda"),
   package <- ver$package
 
   # Packages in this list should always be installed.
-  default_packages <- c()
+  default_packages <- c('pandas')
   extra_packages <- unique(c(default_packages, extra_packages))
 
   # Main OS verification.
@@ -124,23 +125,31 @@ install_conda <- function(package, extra_packages, envname, conda, conda_python_
 
   # remove environment
   if (envname_exists) {
-    cat("Removing ", envname, " conda environment... \n")
+    cat("Removing", envname, "conda environment... \n")
     reticulate::conda_remove(envname = envname, conda = conda)
   }
 
 
-  cat("Creating ", envname, " conda environment... \n")
+  cat("Creating", envname, "conda environment... \n")
   reticulate::conda_create(
     envname = envname, conda = conda,
     packages = paste0("python=", conda_python_version)
   )
 
-  cat("Installing python modules...\n")
+  cat("Installing extra python modules & dependencies...\n")
   reticulate::conda_install(
     envname = envname,
-    packages = c(package, extra_packages),
+    packages = c(extra_packages),
     conda = conda,
     pip = TRUE, # always use pip since it's the recommend way.
+    ...
+  )
+  cat("Installing cmdstanpy...\n")
+  reticulate::conda_install(
+    envname = envname,
+    packages = package,
+    conda = conda,
+    pip = TRUE,
     ...
   )
 
@@ -153,17 +162,23 @@ install_virtualenv <- function(package, extra_packages, envname, ...) {
 
   # remove environment
   if (envname_exists) {
-    cat("Removing ", envname, " virtualenv environment... \n")
+    cat("Removing", envname, "virtualenv environment... \n")
     reticulate::virtualenv_remove(envname = envname, confirm = FALSE)
   }
 
-  cat("Creating ", envname, " virtualenv environment... \n")
+  cat("Creating", envname, "virtualenv environment... \n")
   reticulate::virtualenv_create(envname = envname)
 
-  cat("Installing python modules...\n")
+  cat("Installing extra python modules...\n")
   reticulate::virtualenv_install(
     envname = envname,
-    packages = c(package, extra_packages),
+    packages = extra_packages,
+    ...
+  )
+  cat("Installing cmdstanpy...\n")
+  reticulate::virtualenv_install(
+    envname = envname,
+    packages = package,
     ...
   )
 
@@ -171,20 +186,21 @@ install_virtualenv <- function(package, extra_packages, envname, ...) {
 
 parse_cmdstanpy_version <- function(version) {
 
-  default_version <- "0.3.1"
+  default_version <- 'master'
+  default_repo <- 'git+git://github.com/stan-dev/cmdstanpy'
 
   ver <- list(
-    version = default_version, # version string
-    package = NULL             # input to conda_install or whatever
+    version = default_version,  # used for tagging results
+    package = NULL         # input to conda_install or whatever
   )
 
-  # default version
   if (version == "default") {
+    # user requested default version
+    ver$version <- default_version
+    ver$package <- paste0(default_repo, "@", default_version)
 
-    ver$package <- paste0("cmdstanpy==", ver$version)
-
-  # user provided path to a package
   } else if (grepl("^.*\\.whl$", version)) {
+    # user provided path or url to a package
 
     ver$version <- NA
 
@@ -193,27 +209,28 @@ parse_cmdstanpy_version <- function(version) {
     else
       ver$package <- normalizePath(version)
 
-  # user specified a version
+  } else if (grepl("^git", version)) {
+    # user provided full path to git repo
+    ver$version <- NA
+
+    if (grepl('^git\\+git\\:\\/\\/', version))
+      ver$package <- version
+    else if (grepl('^git\\:\\/\\/', version))
+      ver$package <- paste0('git+', version)
+    else
+      stop('Unable to parse git repo path')
+
   } else {
+    # user specified a version (tag or branch of repo, since not on pypi yet)
 
     ver$version <- version
+    ver$package <- paste0(default_repo, '@', version)
 
   }
 
   # if still not specified by the above ...
-  if (is.null(ver$package)) {
-
-    if (ver$version == "latest") {
-
-        ver$package <- "cmdstanpy"
-
-    } else {
-
-      ver$package <- paste0("cmdstanpy==", ver$version)
-
-    }
-
-  }
+  if (is.null(ver$package))
+    stop(str('Unable to parse version string:', version))
 
   ver
 }

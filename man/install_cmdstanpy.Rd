@@ -20,14 +20,15 @@ available only on Windows.}
 \item{conda}{Path to conda executable (or "auto" to find conda using the
 PATH and other conventional install locations).}
 
-\item{version}{CmdStanPy version to install. Specify "default" to install
-  the latest version tested in this package. Specify "latest" to install
-  the latest version (experimental) irrespective of testing.
+\item{version}{CmdStanPy version to install. Because CmdStanPy
+  is not yet available on PyPI, this installs from github
+  using git+git://github.com/stan-dev/cmdstanpy.
 
-  You can also provide a full major.minor.patch specification (e.g. "1.1.0")
+  Specify "default" to install from the "master" branch. Otherwise, provide a tag to the
+  git commit/branch you wish to install.
 
   Alternatively, you can provide the full URL to an installer binary (e.g.
-  for a nightly binary).}
+  for a nightly binary) or to an alternate git repo (e.g. your local fork).}
 
 \item{envname}{Name of Python environment to install within}
 
