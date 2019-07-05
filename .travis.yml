@@ -1,0 +1,28 @@
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
+language: r
+
+dist: trusty
+sudo: false
+warnings_are_errors: false
+
+cache:
+  packages: true
+  directories:
+    - $HOME/.cache/pip
+
+matrix:
+  include:
+    - name: "CmdStanPy (Stable)"
+      env: CMDSTANPY_VERSION="default"
+    - name: "CmdStanPy (release version) with reticulate master"
+      env:
+        - CMDSTANPY_VERSION="0.3.1"
+      r_github_packages:
+        - rstudio/reticulate
+
+before_script:
+  - sudo apt-get update
+  - sudo apt-get install python3
+  - pip install --upgrade --ignore-installed --user travis virtualenv
+  - R CMD INSTALL .
+  - R -e 'rcmdstan::install_cmdstanpy(version = Sys.getenv("CMDSTANPY_VERSION"))'
