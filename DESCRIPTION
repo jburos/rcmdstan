@@ -1,0 +1,15 @@
+Package: rcmdstan
+Type: Package
+Title: A Lightweight Wrapper for CmdStan
+Version: 0.1.0
+Author: Jacqueline Buros
+Maintainer: Jacqueline Buros <jackinovik@gmail.com>
+Description: rcmdstan is a lightweight interface to Stan for 
+   R users. It wraps CmdStanPy which is an officially-supported 
+   Python wrapper for CmdStan which provides the necessary objects 
+   and functions to compile a Stan program and run Stan's samplers.
+License: BSD
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
+Requires: reticulate
