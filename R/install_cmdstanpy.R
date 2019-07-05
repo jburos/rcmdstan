@@ -123,18 +123,24 @@ install_conda <- function(package, extra_packages, envname, conda, conda_python_
   # find if environment exists
   envname_exists <- envname %in% reticulate::conda_list(conda = conda)$name
 
-  # remove environment
+  # check current environment
   if (envname_exists) {
-    cat("Removing", envname, "conda environment... \n")
-    reticulate::conda_remove(envname = envname, conda = conda)
+    cat("Conda environment", envname, "already exists. Checking if CmdStanPy already installed...\n")
+    reticulate::use_condaenv(envname)
+    if (reticulate::py_module_available('cmdstanpy')) {
+      cat("CmdStanPy found.")
+      return(TRUE)
+    } else {
+      cat("CmdStanPy not found. Proceeding with the installation.")
+      #  reticulate::conda_remove(envname = envname, conda = conda)
+    }
+  } else {
+    cat("Creating", envname, "conda environment... \n")
+    reticulate::conda_create(
+      envname = envname, conda = conda,
+      packages = paste0("python=", conda_python_version)
+    )
   }
-
-
-  cat("Creating", envname, "conda environment... \n")
-  reticulate::conda_create(
-    envname = envname, conda = conda,
-    packages = paste0("python=", conda_python_version)
-  )
 
   cat("Installing extra python modules & dependencies...\n")
   reticulate::conda_install(
@@ -162,12 +168,19 @@ install_virtualenv <- function(package, extra_packages, envname, ...) {
 
   # remove environment
   if (envname_exists) {
-    cat("Removing", envname, "virtualenv environment... \n")
-    reticulate::virtualenv_remove(envname = envname, confirm = FALSE)
+    cat("Virtual environment", envname, "already exists. Checking if CmdStanPy already installed...\n")
+    reticulate::use_virtualenv(envname)
+    if (reticulate::py_module_available('cmdstanpy')) {
+      cat("CmdStanPy found.")
+      return(TRUE)
+    } else {
+      cat("CmdStanPy not found. Proceeding with the installation.")
+      #  reticulate::conda_remove(envname = envname, conda = conda)
+    }
+  } else {
+    cat("Creating", envname, "virtualenv environment... \n")
+    reticulate::virtualenv_create(envname = envname)
   }
-
-  cat("Creating", envname, "virtualenv environment... \n")
-  reticulate::virtualenv_create(envname = envname)
 
   cat("Installing extra python modules...\n")
   reticulate::virtualenv_install(

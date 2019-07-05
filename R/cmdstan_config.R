@@ -11,6 +11,8 @@
 #' @export
 cmdstan_config <- function() {
 
+  # confirm that reticulate has been initialized
+  have_python <- reticulate::py_available(initialize = T)
   # first check if we found cmdstanpy
   have_cmdstanpy <- reticulate::py_module_available("cmdstanpy")
   # then we will check if cmdstanpy can find cmdstan
@@ -23,18 +25,37 @@ cmdstan_config <- function() {
   if (have_cmdstanpy) {
 
     # verify that we have cmdstan
-    cmdstan_path <- get_cmdstan_path()
+    cmdstan_path <- try(get_cmdstan_path(), silent = T)
+    if (inherits(cmdstan_path, 'try-error'))
+      have_cmdstan <- F
+    else
+      have_cmdstan <- T
 
-    structure(class = "cmdstan_config", list(
-      available = TRUE,
-      version = '?', ## TBD
-      path = cmdstan_path,
-      cmdstanpy_available = TRUE,
-      cmdstanpy_version = cmdstanpy$`__version__`,
-      location = config$required_module_path,
-      python = config$python,
-      python_version = config$version
-    ))
+    if (have_cmdstan) {
+      structure(class = "cmdstan_config", list(
+        available = TRUE,
+        version = '?', ## TBD
+        path = cmdstan_path,
+        cmdstanpy_available = TRUE,
+        cmdstanpy_version = cmdstanpy$`__version__`,
+        location = config$required_module_path,
+        python = config$python,
+        python_version = config$version
+      ))
+    } else {
+      structure(class = "cmdstan_config", list(
+        available = FALSE,
+        version = '?', ## TBD
+        path = NULL,
+        cmdstanpy_available = TRUE,
+        cmdstanpy_version = cmdstanpy$`__version__`,
+        location = config$required_module_path,
+        python = config$python,
+        python_version = config$version,
+        error_message = 'CmdStan not yet installed - try running install_cmdstan().'
+      ))
+    }
+
 
     # didn't find it
   } else {
