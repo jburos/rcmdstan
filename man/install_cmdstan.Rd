@@ -5,7 +5,7 @@
 \title{Convenience function to install CmdStan to your system
 Note: assumes you have build tools installed (c++ etc)}
 \usage{
-install_cmdstan()
+install_cmdstan(version = NULL, directory = NULL, test = F)
 }
 \description{
 Convenience function to install CmdStan to your system

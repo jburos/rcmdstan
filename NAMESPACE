@@ -3,6 +3,7 @@
 S3method(print,cmdstan_config)
 export(cmdstan_config)
 export(cmdstan_version)
+export(install_cmdstan)
 export(install_cmdstanpy)
 importFrom(jsonlite,fromJSON)
 importFrom(reticulate,import)
